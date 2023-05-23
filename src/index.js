@@ -1,14 +1,16 @@
 const { Kafka } = require("kafkajs");
+const createMessage = require("./messageCreator");
+const { decode } = require("./avroEncoder");
 
-const doGroup = "do-group";
-const doTopic = "do";
+const doGroup = "oui";
+const doTopic = "do-avro";
 
 async function run() {
   // Create Kafka client
   const kafka = new Kafka({
     clientId: "",
     // brokers: ["localhost:9092"], // Replace with your Kafka broker addresses
-    brokers: ["162.38.112.136:9092" ]
+    brokers: ["162.38.112.138:9092"],
   });
 
   // Create Kafka producer
@@ -23,53 +25,27 @@ async function run() {
   // Subscribe to the Kafka topic
   await consumer.subscribe({ topic: doTopic, fromBeginning: false });
 
-
   // Start consuming messages
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      const originalMessage = message.value.toString();
-      console.log(`Received message: ${originalMessage} from ${message.headers['username']} ${topic}`);
+      console.log("--------------------");
+      const originalMessage = decode(message.value);
+      console.log(
+        `Received message: ${originalMessage} from ${message.headers["username"]} ${topic}`
+      );
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const response = getRandomFrenchWord();
+      const response = await createMessage();
 
       await producer.send({
         topic: doTopic,
-        messages: [{ value: response, headers: { username: "alexisl" } }],
+        messages: [response],
       });
 
-      console.log(`Sent message: ${response}`);
+      console.log(`Message sent !`);
     },
   });
-}
-
-const frenchWords = [
-  "avec",
-  "sans",
-  "de",
-  "la",
-  "le",
-  "les",
-  "un",
-  "une",
-  "des",
-  "et",
-  "ou",
-  "mais",
-  "donc",
-  "or",
-  "ni",
-  "car",
-  "qui",
-  ".",
-  "!",
-  "?",
-];
-
-function getRandomFrenchWord() {
-  const randomIndex = Math.floor(Math.random() * frenchWords.length);
-  return frenchWords[randomIndex];
 }
 
 run().catch(console.error);
