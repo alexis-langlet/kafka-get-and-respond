@@ -1,34 +1,27 @@
 const { getRandomFrenchWord } = require("./words");
-const { encode, getSchemaId } = require("./avroEncoder");
+const {getRandomLatitude, getRandomLongitude, getRandomCountry, getRandomCity} = require("./random");
 
 const subject = "do.polytech.Message";
 
 const createMessage = async (message) => {
-  const response = getRandomFrenchWord();
-  console.log(`Message created: ${response}`);
 
-  return await messageWrapper(response);
-};
+  const word = getRandomFrenchWord();
+  const country = getRandomCountry();
+  const city = getRandomCity(country);
+  const lat = getRandomLatitude();
+  const long = getRandomLongitude();
 
-const messageWrapper = async (message) => {
-  try {
-    // Fetch schema version from registry
-    const version = await getSchemaId();
+  const response = {
+    message: word,
+    country,
+    city,
+    temperature: Math.random()*4+18,
+    random: Math.random()*31+12,
+    lat,
+    long
+  };
 
-    console.log(`Schema version for ${subject}: ${version}`);
-
-    return {
-      value: encode(message),
-      headers: {
-        username: "alexisl",
-        schema_id: version.toString(),
-      },
-    };
-
-    // Do something with the version
-  } catch (error) {
-    console.error(error);
-  }
+  return response;
 };
 
 module.exports = createMessage;

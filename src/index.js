@@ -1,8 +1,10 @@
 const { Kafka } = require("kafkajs");
 const createMessage = require("./messageCreator");
 const { decode } = require("./avroEncoder");
+const { messageWrapper } = require("./messageWrapper");
+const {logBlue, logGreen, logRed} = require("./logger");
 
-const doGroup = "oui";
+const doGroup = "do-group";
 const doTopic = "do-avro";
 
 async function run() {
@@ -29,21 +31,24 @@ async function run() {
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
       console.log("--------------------");
-      const originalMessage = decode(message.value);
-      console.log(
+      const originalMessage = decode(message);
+      logBlue(
         `Received message: ${originalMessage} from ${message.headers["username"]} ${topic}`
       );
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const response = await createMessage();
+      const wrappedResponse = await messageWrapper(response);
 
       await producer.send({
         topic: doTopic,
-        messages: [response],
+        messages: [wrappedResponse],
       });
 
-      console.log(`Message sent !`);
+      const stringResponse = JSON.stringify(response);
+
+      logGreen(`Message sent: ${stringResponse} !`);
     },
   });
 }

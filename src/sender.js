@@ -17,12 +17,17 @@ async function run() {
   // Connect to Kafka
   await Promise.all([producer.connect()]);
 
+for (let i = 0; i < 10000; i++) {
+
   const response = await createMessage();
+  const wrappedResponse = messageWrapper(response);
 
   await producer.send({
     topic: doTopic,
-    messages: [response],
+    messages: [wrappedResponse],
   });
+
+}
 
   console.log(`Message sent !`);
 }
